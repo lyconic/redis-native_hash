@@ -90,7 +90,7 @@ describe RedisHash do
   end
 
   after :each do
-    #@hash.destroy
+    @hash.destroy
   end
 end
 

@@ -1,3 +1,5 @@
+require File.expand_path(File.dirname(__FILE__) + '/../spec_helper')
+
 describe RedisHash do
   before :each do
     @hash = RedisHash.new :test, "foo" => "bar"

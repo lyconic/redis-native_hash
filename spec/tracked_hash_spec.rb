@@ -1,3 +1,5 @@
+require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
+
 describe TrackedHash do
   before :each do
     @hash = TrackedHash[:a=>33,:b=>34,:c=>35,:d=>36]

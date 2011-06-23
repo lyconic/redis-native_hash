@@ -6,20 +6,12 @@ class RedisHash < TrackedHash
 
   def initialize(*args)
     super(nil)
-    keys = args.shift
-    case keys
-    when Hash
-      self.namespace, self.key = keys.first
-    else
-      self.namespace = keys.to_s
-      track! # new hash. start tracking BEFORE merging any data.
+    track!
+    if args.first.kind_of?(String)
+      namespace = args.shift
     end
     data = args.shift
-    case data
-    when Hash
-      update data
-    end
-    track! # this might be the second call, but near-zero cost to call again.
+    update(data.stringify_keys!) if data.kind_of?(Hash)
   end
 
   def []=(key, value)
@@ -62,11 +54,15 @@ class RedisHash < TrackedHash
 
   def save( attempt = 0 )
     fail "Unable to save Redis::Hash after max attempts." if attempt > 5
+    puts "Inside #save: #{self.inspect} (#{self.namespace}=>#{self.key})"
+    puts "original: #{original.inspect} (#{original.class})"
+    puts "added: #{added.inspect}"
+    puts "changed: #{changed.inspect}"
     redis.watch redis_key
     latest_version = redis.hget(redis_key, "__version")
     reload! unless ( latest_version.nil? || latest_version == self.version )
     self.version = nil # generate new version token
-    changed_keys = self.changed
+    changed_keys = (self.changed + self.added).uniq
     changes = []
     changed_keys.each do |key|
       changes.push( key, Redis::Marshal.dump(self[key]) )
@@ -74,6 +70,7 @@ class RedisHash < TrackedHash
     deleted_keys = self.deleted
     unless deleted_keys.empty? and changes.empty?
       success = redis.multi do
+        puts "sending changes to redis: #{changes.inspect}"
         redis.hmset( redis_key, *changes.push("__version", self.version) ) unless changes.empty?
         deleted_keys.each { |key| redis.hdel( redis_key, key) }
       end
@@ -123,15 +120,17 @@ class RedisHash < TrackedHash
   end
 
   def self.find(params)
+    puts "Got to .find with the following params: #{params.inspect}"
     case params
     when Hash
       hashes = []
       params.each_pair do |namespace, key|
         result = fetch_values( "#{namespace}:#{key}" )
         unless result.empty?
-          hashes << self.new( {namespace=>key}, result)
+          hashes << build(namespace,key,result)
         end
       end
+      puts "found: #{hashes.inspect}"
       unless hashes.empty?
         hashes.size == 1 ? hashes.first : hashes
       else
@@ -139,8 +138,16 @@ class RedisHash < TrackedHash
       end
     when String
       result = fetch_values(params)
-      result.empty? ? nil : self.new(params, result)
+      result.empty? ? nil : build(nil,params,result)
     end
+  end
+
+  def self.build(namespace, key, values)
+    h = self.new
+    h.namespace = namespace
+    h.key = key
+    h.populate(values)
+    h
   end
 
   def self.fetch_values(key)

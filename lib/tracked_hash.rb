@@ -11,6 +11,12 @@ class TrackedHash < Hash
   end
   alias_method :untrack!, :untrack
 
+  def retrack
+    untrack!
+    track!
+  end
+  alias_method :retrack!, :retrack
+
   def changed
     changes = keys.select do |key|
       self[key] != original[key]
@@ -23,6 +29,11 @@ class TrackedHash < Hash
 
   def added
     self.keys - original.keys
+  end
+
+  def populate(other_hash)
+    update(other_hash)
+    retrack!
   end
 
   def update(other_hash)

@@ -7,11 +7,13 @@ class RedisHash < TrackedHash
   def initialize(*args)
     super(nil)
     track!
-    if args.first.kind_of?(String)
-      namespace = args.shift
+    if args.first.kind_of?(String) or args.first.kind_of?(Symbol)
+      self.namespace = args.shift
+    elsif !self.instance_of?(RedisHash) # use class name as default namespace for user defined classes
+      self.namespace = self.class.to_s.downcase
     end
     data = args.shift
-    update(data.stringify_keys!) if data.kind_of?(Hash)
+    update(data) if data.kind_of?(Hash)
   end
 
   def []=(key, value)
@@ -54,10 +56,6 @@ class RedisHash < TrackedHash
 
   def save( attempt = 0 )
     fail "Unable to save Redis::Hash after max attempts." if attempt > 5
-    puts "Inside #save: #{self.inspect} (#{self.namespace}=>#{self.key})"
-    puts "original: #{original.inspect} (#{original.class})"
-    puts "added: #{added.inspect}"
-    puts "changed: #{changed.inspect}"
     redis.watch redis_key
     latest_version = redis.hget(redis_key, "__version")
     reload! unless ( latest_version.nil? || latest_version == self.version )
@@ -70,7 +68,6 @@ class RedisHash < TrackedHash
     deleted_keys = self.deleted
     unless deleted_keys.empty? and changes.empty?
       success = redis.multi do
-        puts "sending changes to redis: #{changes.inspect}"
         redis.hmset( redis_key, *changes.push("__version", self.version) ) unless changes.empty?
         deleted_keys.each { |key| redis.hdel( redis_key, key) }
       end
@@ -92,7 +89,7 @@ class RedisHash < TrackedHash
         data.delete("__version")
       end
     self.version = v unless v.nil?
-    super(data)
+    super(data.stringify_keys!)
   end
 
   def reload!
@@ -120,7 +117,6 @@ class RedisHash < TrackedHash
   end
 
   def self.find(params)
-    puts "Got to .find with the following params: #{params.inspect}"
     case params
     when Hash
       hashes = []
@@ -130,14 +126,17 @@ class RedisHash < TrackedHash
           hashes << build(namespace,key,result)
         end
       end
-      puts "found: #{hashes.inspect}"
       unless hashes.empty?
         hashes.size == 1 ? hashes.first : hashes
       else
         nil
       end
     when String
-      result = fetch_values(params)
+      unless self.instance_of?(RedisHash)
+        result = fetch_values( "#{self.new.namespace}:#{params}" )
+      else
+        result = fetch_values(params)
+      end
       result.empty? ? nil : build(nil,params,result)
     end
   end
@@ -153,6 +152,20 @@ class RedisHash < TrackedHash
   def self.fetch_values(key)
     results = redis.hgetall(key)
     results.each_pair { |key,value| results[key] = Redis::Marshal.load(value) }
+  end
+
+  def self.attr_persist(*attributes)
+    attributes.each do |attr|
+      class_eval <<-EOS
+        def #{attr}=(value)
+          self["#{attr}"] = value
+        end
+
+        def #{attr}
+          self["#{attr}"]
+        end
+      EOS
+    end
   end
 
   protected

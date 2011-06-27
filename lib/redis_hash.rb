@@ -101,6 +101,14 @@ class RedisHash < TrackedHash
     redis.del( redis_key )
     untrack!
     clear
+    self.key = nil
+  end
+
+  def renew_key
+    redis.del( redis_key )
+    original.clear
+    self.key = nil
+    key
   end
 
   def self.redis

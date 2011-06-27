@@ -80,6 +80,32 @@ describe RedisHash do
     end
   end
 
+  describe "#renew" do
+    it "should generate a new key" do
+      old_key = @hash.key
+      new_key = @hash.renew_key
+      @hash.key.should eq(new_key)
+      @hash.key.should_not eq(old_key)
+    end
+    it "should remove the old hash from redis" do
+      old_key   = @hash.key
+      namespace = @hash.namespace
+      @hash.renew_key
+      hash = RedisHash.find namespace => old_key
+      hash.should be_nil
+    end
+    it "should not persist the hash under the new key until #save is called" do
+      @hash["good key"] = "good value"
+      key = @hash.renew_key
+      bad_hash = RedisHash.find :test => key
+      bad_hash.should be_nil
+      @hash.save
+      good_hash = RedisHash.find :test => key
+      good_hash["good key"].should eq("good value")
+      good_hash["foo"].should      eq("bar")
+    end
+  end
+
   describe ".find" do
     it "should find an existing redis hash" do
       hash = RedisHash.find :test => @hash.key

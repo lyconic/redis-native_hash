@@ -44,9 +44,12 @@ class RedisHash < TrackedHash
     indices.collect { |key| self[ convert_key(key) ] }
   end
 
-  attr_writer :key
   def key
     @key ||= self.class.generate_key
+  end
+
+  def key=(new_key)
+    renew_key(new_key)
   end
 
   attr_writer :version
@@ -104,10 +107,10 @@ class RedisHash < TrackedHash
     self.key = nil
   end
 
-  def renew_key
+  def renew_key(new_key = nil)
     redis.del( redis_key )
     original.clear
-    self.key = nil
+    @key = new_key
     key
   end
 

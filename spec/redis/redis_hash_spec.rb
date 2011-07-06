@@ -106,6 +106,22 @@ describe RedisHash do
     end
   end
 
+  describe "#key=" do
+    it "should allow an arbitrary key to be used" do
+      @hash.key = "blah@blah.com"
+      @hash.save
+      a_hash = RedisHash.find :test => "blah@blah.com"
+      a_hash["foo"].should eq('bar')
+    end
+    it "should not leave the old hash behind when the key is changed" do
+      old_key = @hash.key
+      @hash.key = "carl@linkleaf.com"
+      @hash.save
+      bad_hash = RedisHash.find :test => old_key
+      bad_hash.should be_nil
+    end
+  end
+
   describe ".find" do
     it "should find an existing redis hash" do
       hash = RedisHash.find :test => @hash.key
@@ -116,6 +132,7 @@ describe RedisHash do
       hash.should == nil
     end
   end
+
 
   after :each do
     @hash.destroy

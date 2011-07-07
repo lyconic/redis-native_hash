@@ -3,10 +3,10 @@ module Rack
     class RedisHash < Abstract::ID
 
       def get_session(env, sid)
-        session = ::RedisHash.find session_prefix => sid
+        session = Redis::NativeHash.find session_prefix => sid
         unless sid and session
           env['rack.errors'].puts("Session '#{sid.inspect}' not found, initializing...") if $VERBOSE and not sid.nil?
-          session = ::RedisHash.new session_prefix
+          session = Redis::NativeHash.new session_prefix
           sid = session.key
         end
         return [sid, session]

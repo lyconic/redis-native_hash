@@ -1,8 +1,8 @@
 require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
 
-describe TrackedHash do
+describe Redis::TrackedHash do
   before :each do
-    @hash = TrackedHash[:a=>33,:b=>34,:c=>35,:d=>36]
+    @hash = Redis::TrackedHash[:a=>33,:b=>34,:c=>35,:d=>36]
   end
 
   describe "#added" do
@@ -54,7 +54,7 @@ describe TrackedHash do
       @other_hash = @hash.dup
       @hash.track!; @other_hash.track!
     end
-    it "maintains change from both TrackedHash" do
+    it "maintains change from both Redis::TrackedHash" do
       @hash[:a] = 64; @other_hash[:c]=96
       @hash.merge!(@other_hash).should == {:a=>64,:b=>34,:c=>96,:d=>36}
     end

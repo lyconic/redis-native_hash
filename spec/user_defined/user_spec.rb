@@ -1,6 +1,6 @@
 require File.expand_path(File.dirname(__FILE__) + '/../spec_helper')
 
-class User < RedisHash
+class User < Redis::NativeHash
   attr_persist :username, :password, :email
   #attr_index :username
 end

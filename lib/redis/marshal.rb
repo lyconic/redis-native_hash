@@ -4,6 +4,8 @@ class Redis
       case value
       when String
         value
+      when Fixnum
+        value
       else
         ::Marshal.dump(value)
       end

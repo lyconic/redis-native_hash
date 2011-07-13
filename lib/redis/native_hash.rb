@@ -2,9 +2,9 @@ require 'securerandom'
 
 class Redis
   class NativeHash < TrackedHash
-  
+
     attr_accessor :namespace
-  
+
     def initialize(*args)
       super(nil)
       track!
@@ -16,48 +16,48 @@ class Redis
       data = args.shift
       update(data) if data.kind_of?(Hash)
     end
-  
+
     def []=(key, value)
       super(convert_key(key), value)
     end
     alias_method :store, :[]=
-  
+
     def fetch(key, *extras)
       super(convert_key(key),*extras)
     end
-  
+
     def [](key)
        super convert_key(key)
     end
-  
+
     def key?(key)
       super convert_key(key)
     end
     alias_method :include?, :key?
     alias_method :has_key?, :key?
     alias_method :member?,  :key?
-  
+
     def delete(key)
       super convert_key(key)
     end
-  
+
     def values_at(*indices)
       indices.collect { |key| self[ convert_key(key) ] }
     end
-  
+
     def key
       @key ||= self.class.generate_key
     end
-  
+
     def key=(new_key)
       renew_key(new_key)
     end
-  
+
     attr_writer :version
     def version
       @version ||= self.class.generate_key
     end
-  
+
     def save( attempt = 0 )
       fail "Unable to save Redis::Hash after max attempts." if attempt > 5
       redis.watch redis_key
@@ -84,7 +84,7 @@ class Redis
         redis.unwatch
       end
     end
-  
+
     def update(data)
       v = case data
         when self.class
@@ -95,39 +95,41 @@ class Redis
       self.version = v unless v.nil?
       super(data.stringify_keys!)
     end
-  
+
     def reload!
       self.update( self.class.find( {namespace=>key} ) )
     end
     alias_method :reload, :reload!
-  
+
     def destroy
       redis.del( redis_key )
       untrack!
       clear
       self.key = nil
     end
-  
+
     def renew_key(new_key = nil)
-      redis.del( redis_key )
-      original.clear
+      unless @key.nil? || @key == new_key
+        redis.del( redis_key )
+        original.clear
+      end
       @key = new_key
       key
     end
-  
+
     def self.redis
       @@redis ||= Redis.new
     end
-  
+
     def self.redis=(resource)
       @@redis = resource
     end
-  
+
     def self.generate_key
       t = Time.now
       t.strftime('%Y%m%d%H%M%S.') + t.usec.to_s.rjust(6,'0') + '.' + SecureRandom.hex(16)
     end
-  
+
     def self.find(params)
       case params
       when Hash
@@ -152,7 +154,7 @@ class Redis
         result.empty? ? nil : build(nil,params,result)
       end
     end
-  
+
     def self.build(namespace, key, values)
       h = self.new
       h.namespace = namespace
@@ -160,26 +162,26 @@ class Redis
       h.populate(values)
       h
     end
-  
+
     def self.fetch_values(key)
       results = redis.hgetall(key)
       results.each_pair { |key,value| results[key] = Redis::Marshal.load(value) }
     end
-  
+
     def self.attr_persist(*attributes)
       attributes.each do |attr|
         class_eval <<-EOS
           def #{attr}=(value)
             self["#{attr}"] = value
           end
-  
+
           def #{attr}
             self["#{attr}"]
           end
         EOS
       end
     end
-  
+
     protected
       def redis; self.class.redis; end
       def redis_key
@@ -190,3 +192,4 @@ class Redis
       end
   end
 end
+

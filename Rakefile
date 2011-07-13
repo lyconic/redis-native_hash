@@ -14,13 +14,13 @@ require 'rake'
 require 'jeweler'
 Jeweler::Tasks.new do |gem|
   # gem is a Gem::Specification... see http://docs.rubygems.org/read/chapter/20 for more options
-  gem.name = "redis-hash"
-  gem.homepage = "http://github.com/carlzulauf/redis-hash"
+  gem.name = "redis-native_hash"
+  gem.homepage = "http://github.com/carlzulauf/redis-native_hash"
   gem.license = "MIT"
   gem.summary = %Q{ruby-hash-to-redis-hash mapping}
   gem.description = %Q{ruby-hash-to-redis-hash mapping}
   gem.email = "czulauf@lyconic.com"
-  gem.authors = ["Carl Zulauf"]
+  gem.authors = ["Carl Zulauf", "Adam Lassek"]
   # dependencies defined in Gemfile
 end
 Jeweler::RubygemsDotOrgTasks.new

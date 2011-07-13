@@ -5,7 +5,7 @@
 
 Gem::Specification.new do |s|
   s.name = %q{redis-native_hash}
-  s.version = "0.0.1"
+  s.version = "0.1.0"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Carl Zulauf", "Adam Lassek"]
@@ -30,7 +30,7 @@ Gem::Specification.new do |s|
     "lib/redis/marshal.rb",
     "lib/redis/native_hash.rb",
     "lib/redis/tracked_hash.rb",
-    "redis-hash.gemspec",
+    "redis-native_hash.gemspec",
     "spec/redis-hash_spec.rb",
     "spec/redis/redis_hash_spec.rb",
     "spec/spec_helper.rb",

@@ -127,17 +127,17 @@ class Redis
       key
     end
 
+    def generate_key
+      t = Time.now
+      t.strftime('%Y%m%d%H%M%S.') + t.usec.to_s.rjust(6,'0') + '.' + SecureRandom.hex(16)
+    end
+
     def self.redis
       @@redis ||= Redis.new
     end
 
     def self.redis=(resource)
       @@redis = resource
-    end
-
-    def self.generate_key
-      t = Time.now
-      t.strftime('%Y%m%d%H%M%S.') + t.usec.to_s.rjust(6,'0') + '.' + SecureRandom.hex(16)
     end
 
     def self.find(params)

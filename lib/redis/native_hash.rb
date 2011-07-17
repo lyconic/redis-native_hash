@@ -56,7 +56,7 @@ class Redis
     end
 
     def key
-      @key ||= self.class.generate_key
+      @key ||= self.generate_key
     end
 
     def key=(new_key)
@@ -65,7 +65,7 @@ class Redis
 
     attr_writer :version
     def version
-      @version ||= self.class.generate_key
+      @version ||= self.generate_key
     end
 
     def save( attempt = 0 )

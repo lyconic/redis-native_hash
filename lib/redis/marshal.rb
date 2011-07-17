@@ -7,7 +7,7 @@ class Redis
       when Fixnum
         value
       else
-        ::Marshal.dump(value)
+        ::Marshal.dump(value) rescue nil
       end
     end
 

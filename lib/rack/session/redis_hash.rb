@@ -14,8 +14,10 @@ module Rack
 
       def set_session(env, session_id, session, options)
         unless session.kind_of?(Redis::NativeHash)
-          session = Redis::NativeHash.new(session)
-          session.key = session_id
+          real_session = Redis::NativeHash.new session_prefix
+          real_session.update(session) if session.kind_of?(Hash)
+          real_session.key = session_id unless session_id.nil?
+          session = real_session
         end
         if options[:drop]
           session.destroy

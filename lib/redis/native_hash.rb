@@ -8,6 +8,10 @@ if defined?(Rack::Session)
   require 'rack/session/redis_hash'
 end
 
+if defined?(ActionDispatch::Session)
+  require 'action_dispatch/session/redis_hash'
+end
+
 require 'securerandom'
 
 class Redis
@@ -20,8 +24,9 @@ class Redis
       track!
       if args.first.kind_of?(String) or args.first.kind_of?(Symbol)
         self.namespace = args.shift
-      elsif !self.instance_of?(NativeHash) # use class name as default namespace for user defined classes
-        self.namespace = self.class.to_s.downcase
+      else # use class name as default namespace for user defined classes
+        self.namespace = self.class.to_s.downcase \
+            unless self.instance_of?(::Redis::NativeHash)
       end
       data = args.shift
       update(data) if data.kind_of?(Hash)
@@ -156,7 +161,7 @@ class Redis
           nil
         end
       when String
-        unless self.instance_of?(NativeHash)
+        unless self.instance_of?(::Redis::NativeHash)
           result = fetch_values( "#{self.new.namespace}:#{params}" )
         else
           result = fetch_values(params)

@@ -161,7 +161,7 @@ class Redis
           nil
         end
       when String
-        unless self.instance_of?(::Redis::NativeHash)
+        unless self == Redis::NativeHash
           result = fetch_values( "#{self.new.namespace}:#{params}" )
         else
           result = fetch_values(params)

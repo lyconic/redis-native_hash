@@ -111,6 +111,11 @@ class Redis
       super(data.stringify_keys!)
     end
 
+    def replace(other_hash)
+      clear
+      update(other_hash)
+    end
+
     def reload!
       self.update( self.class.find( {namespace=>key} ) )
     end

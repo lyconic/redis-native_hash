@@ -2,6 +2,8 @@ require 'redis'
 require 'core_ext/hash' unless defined?(ActiveSupport)
 require 'redis/marshal'
 require 'redis/tracked_hash'
+require 'redis/key_helpers'
+require 'redis/big_hash'
 
 if defined?(Rack::Session)
   require "rack/session/abstract/id"
@@ -16,6 +18,7 @@ require 'securerandom'
 
 class Redis
   class NativeHash < TrackedHash
+    include KeyHelpers
 
     attr_accessor :namespace
 
@@ -58,10 +61,6 @@ class Redis
 
     def values_at(*indices)
       indices.collect { |key| self[ convert_key(key) ] }
-    end
-
-    def key
-      @key ||= generate_key
     end
 
     def key=(new_key)
@@ -137,11 +136,6 @@ class Redis
       key
     end
 
-    def generate_key
-      t = Time.now
-      t.strftime('%Y%m%d%H%M%S.') + t.usec.to_s.rjust(6,'0') + '.' + SecureRandom.hex(16)
-    end
-
     def self.redis
       @@redis ||= Redis.new
     end
@@ -204,12 +198,7 @@ class Redis
 
     protected
       def redis; self.class.redis; end
-      def redis_key
-        namespace.nil? ? key : "#{namespace}:#{key}"
-      end
-      def convert_key(key)
-        key.to_s
-      end
+
   end
 end
 

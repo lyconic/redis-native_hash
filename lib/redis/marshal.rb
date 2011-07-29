@@ -12,6 +12,7 @@ class Redis
     end
 
     def self.load(value)
+      return nil if value.nil?
       return value unless value.start_with?("\004")
       ::Marshal.load(value) rescue value
     end

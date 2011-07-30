@@ -51,6 +51,8 @@ class Redis
       end
       redis.hmset(redis_key, *writes)
     end
+    alias_method :merge,  :update
+    alias_method :merge!, :update
 
     def delete(hash_key)
       current_value = self[hash_key]

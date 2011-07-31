@@ -4,11 +4,11 @@ class Redis
   class BigHash
     include KeyHelpers
 
-    attr_accessor :namespace
+    attr_reader :namespace
 
     def initialize( key = nil, namespace = nil )
-      self.key       = key
-      self.namespace = namespace
+      @key       = key
+      @namespace = namespace
       super(nil)
     end
 
@@ -23,13 +23,18 @@ class Redis
     def key=(new_key)
       new_key = generate_key if new_key.nil?
       unless @key.nil? || @key == new_key
-        keys.each do |k|
-          redis.hset( redis_key(new_key), k,
-            redis.hget(redis_key, k) )
-        end
+        copy_hash( redis_key, redis_key(new_key) )
         clear
       end
       @key = new_key
+    end
+
+    def namespace=(new_namespace)
+      unless new_namespace == namespace
+        copy_hash( redis_key, redis_key(key, new_namespace) )
+        clear
+        @namespace = new_namespace
+      end
     end
 
     def keys
@@ -65,10 +70,17 @@ class Redis
     end
     alias_method :destroy, :clear
 
-    private
+    protected
 
       def redis
         NativeHash.redis
+      end
+
+      def copy_hash(source_key, dest_key)
+        keys.each do |k|
+          redis.hset( dest_key, k,
+            redis.hget(source_key, k) )
+        end
       end
 
   end

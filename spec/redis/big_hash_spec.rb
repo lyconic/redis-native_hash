@@ -86,6 +86,17 @@ describe Redis::BigHash do
     end
   end
 
+  describe "#namespace" do
+    it "should prepend the namespace onto the key" do
+      @hash.namespace = "test_namespace"
+      @hash.redis_key.should =~ /^test_namespace:/
+    end
+    it "should migrate existing values over" do
+      @hash.namespace = "test_namespace"
+      @hash[:foo].should == "bar"
+    end
+  end
+
   after :each do
     @hash.destroy
   end

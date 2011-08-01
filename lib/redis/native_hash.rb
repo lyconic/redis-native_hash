@@ -14,6 +14,10 @@ if defined?(ActionDispatch::Session)
   require 'action_dispatch/session/redis_hash'
 end
 
+if defined?(ActiveSupport)
+  require "active_support/cache/redis_hash"
+end
+
 require 'securerandom'
 
 class Redis

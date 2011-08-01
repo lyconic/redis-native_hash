@@ -14,6 +14,9 @@ describe Redis::BigHash do
     it "should get nil for a value that doesn't exist" do
       @hash[:bad_key].should be_nil
     end
+    it "should allow lookup of multiple keys, returning an array" do
+      @hash[:foo, :yin, :bad_key].should == ["bar", "yang", nil]
+    end
   end
 
   describe "#[]=" do
@@ -26,6 +29,17 @@ describe Redis::BigHash do
       t = Time.now
       @hash[:test] = t
       @hash[:test].should == t
+    end
+  end
+
+  describe "#add" do
+    it "should not overwrite an existing value" do
+      @hash.add(:foo, "bad value")
+      @hash[:foo].should == "bar"
+    end
+    it "should set a value when it doesn't exist" do
+      @hash.add(:new_key, "good value")
+      @hash[:new_key].should == "good value"
     end
   end
 

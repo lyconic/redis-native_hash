@@ -12,12 +12,23 @@ class Redis
       super(nil)
     end
 
-    def [](hash_key)
-      Redis::Marshal.load( redis.hget(redis_key, convert_key(hash_key)) )
+    def [](*hash_keys)
+      if hash_keys.one?
+        Redis::Marshal.load( redis.hget(redis_key, convert_key(hash_keys.first)) )
+      elsif hash_keys.any?
+        values = redis.hmget( redis_key, *hash_keys.map{ |k| convert_key(k) } )
+        values.map{ |v| Redis::Marshal.load(v) }
+      end
     end
 
     def []=(hash_key, value)
       redis.hset( redis_key, convert_key(hash_key), Redis::Marshal.dump(value) )
+    end
+
+    # set only if key doesn't already exist
+    # equivilent to doing `hash[:key] ||= value`, but more efficient
+    def add(hash_key, value)
+      redis.hsetnx( redis_key, convert_key(hash_key), Redis::Marshal.dump(value) )
     end
 
     def key=(new_key)
@@ -47,6 +58,12 @@ class Redis
     alias_method :include?, :key?
     alias_method :has_key?, :key?
     alias_method :member?,  :key?
+
+    def size
+      redis.hlen redis_key
+    end
+    alias_method :count,  :size
+    alias_method :length, :size
 
     def update(other_hash)
       writes = []

@@ -1,13 +1,12 @@
-require 'digest/md5'
+require 'redis/native_hash'
 
 module ActiveSupport
   module Cache
     class RedisHash < Store
       def initialize(*options)
-        options.extract_options!
-        namespace = options[:namespace] || :rails_cache
-        key       = options[:key]
-        @hash = BigHash.new namespace => key
+        options = options.extract_options!
+        super(options)
+        @hash = ::Redis::BigHash.new(options[:key], options[:namespace] || :rails_cache)
         extend Strategy::LocalCache
       end
 

@@ -24,13 +24,11 @@ module ActiveSupport
 
         # Read an entry from the cache.
         def read_entry(key, options)
-          puts "inside #read_entry(#{key},#{options.inspect})"
           Redis::Marshal.load(redis.get(key))
         end
 
         # Write an entry to the cache.
         def write_entry(key, entry, options)
-          puts "writing cache entry #{key}: #{entry.class} (#{entry.size rescue 0} bytes)"
           method = options && options[:unless_exist] ? :setnx : :set
           expires_in = options[:expires_in].to_i
           redis.send(method, key, Redis::Marshal.dump(entry))

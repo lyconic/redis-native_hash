@@ -34,7 +34,7 @@ class Redis
     def key=(new_key)
       new_key = generate_key if new_key.nil?
       unless @key.nil? || @key == new_key
-        copy_hash( redis_key, redis_key(new_key) )
+        self.class.copy_hash( redis_key, redis_key(new_key) )
         clear
       end
       @key = new_key
@@ -42,14 +42,14 @@ class Redis
 
     def namespace=(new_namespace)
       unless new_namespace == namespace
-        copy_hash( redis_key, redis_key(key, new_namespace) )
+        self.class.copy_hash( redis_key, redis_key(key, new_namespace) )
         clear
         @namespace = new_namespace
       end
     end
 
     def keys
-      redis.hkeys redis_key
+      self.class.keys redis_key
     end
 
     def key?(hash_key)
@@ -90,16 +90,29 @@ class Redis
     protected
 
       def redis
-        NativeHash.redis
+        self.class.redis
+      end
+
+    class << self
+      def keys(redis_key)
+        redis.hkeys redis_key
+      end
+
+      def redis
+        @@redis ||= NativeHash.redis
+      end
+
+      def redis=(client)
+        @@redis = client
       end
 
       def copy_hash(source_key, dest_key)
-        keys.each do |k|
+        keys(source_key).each do |k|
           redis.hset( dest_key, k,
             redis.hget(source_key, k) )
         end
       end
-
+    end
   end
 end
 

@@ -15,7 +15,7 @@ if defined?(ActionDispatch::Session)
 end
 
 if defined?(ActiveSupport)
-  require "active_support/cache/redis_hash"
+  require "active_support/cache/redis_store"
 end
 
 require 'securerandom'

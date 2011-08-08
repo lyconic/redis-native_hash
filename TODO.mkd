@@ -1,0 +1,58 @@
+## Plan to make a replacement for Rack::Session::Abstract::SessionHash ##
+
+### Rationale ###
+
+`SessionHash` attempts to lazy load the session in Rack 1.3 and higher.
+It does so in a way that does not play nice with Redis::NativeHash.
+Specifically, it `#merge!`s the content of the hash returned by the redis
+session store, instead of using that hash as the actual session hash.
+Since the session hash is no longer a `Redis::NativeHash` instance it is unable
+to keep track of what session values have been changed. This results in an
+additional read when the session is saved since NativeHash needs to read from
+redis again to figure out what values have changed.
+
+### Alternatives ###
+
+1. `NativeHash` could be changed to allow for blind writes. There are two major
+downsides to this approach.
+
+  1. `NativeHash` would have no way of knowing which keys are already in the redis
+  hash without reading from redis a second time. Not reading the hash before
+  writing would mean you would have to delete the hash before beginnning to
+  write the data to ensure any keys which no longer exist have been removed.
+
+  2. This would circumvent NativeHash's built-in support for concurrent writes
+  and could lead to strange issues with multiple apps have to write to the
+  same session.
+
+2. Leave it be. Nothing is technically "broken", so don't fix it.
+
+  1. Session read/write cycles will require 2x the number of complete loads
+  of the corresponding redis hash.
+
+  2. Creating and destroying `NativeHash` instances could result in needless
+  memory usage and garbage collection on every page request.
+  The total cost of this is probably pretty small.
+
+3. Just overwrite `Rack::Session::Abstract::ID` and make `env['rack.session']`
+an instance of `Redis::NativeHash`. You'll lose lazy loading, but it will be a
+quick fix to the extra read problem. This probably won't work though because
+other methods on `Abstract::ID` look for methods like `#loaded?`... ok, it will
+work, it will just require several methods of `Abstract::ID` to be overwritten.
+May actually be easier to just replace `Abstract::ID` altogether.
+
+
+### Proposal ###
+
+Take the time to write a drop in replacement for `SessionHash`.
+This replacement would respond to the special methods added to `SessionHash`
+and will also accomplish similar lazy loading for the underlying `NativeHash`.
+
+Attempt to integrate with existing `Rack::Session::Abstract::ID` by overriding
+`ID#prepare_session`.
+
+## Make RedisHashSession support expirations ##
+
+That's right, it currently doesn't support expirations.
+Make it happen and test it. Provide a default expiration too, probably.
+

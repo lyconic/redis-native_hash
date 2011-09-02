@@ -140,69 +140,75 @@ class Redis
       key
     end
 
-    def self.redis
-      @@redis ||= Redis.new
-    end
-
-    def self.redis=(resource)
-      @@redis = resource
-    end
-
-    def self.find(params)
-      case params
-      when Hash
-        hashes = []
-        params.each_pair do |namespace, key|
-          result = fetch_values( "#{namespace}:#{key}" )
-          unless result.empty?
-            hashes << build(namespace,key,result)
-          end
-        end
-        unless hashes.empty?
-          hashes.size == 1 ? hashes.first : hashes
-        else
-          nil
-        end
-      when String
-        unless self == Redis::NativeHash
-          result = fetch_values( "#{self.new.namespace}:#{params}" )
-        else
-          result = fetch_values(params)
-        end
-        result.empty? ? nil : build(nil,params,result)
-      end
-    end
-
-    def self.build(namespace, key, values)
-      h = self.new
-      h.namespace = namespace
-      h.key = key
-      h.populate(values)
-      h
-    end
-
-    def self.fetch_values(key)
-      results = redis.hgetall(key)
-      results.each_pair { |key,value| results[key] = Redis::Marshal.load(value) }
-    end
-
-    def self.attr_persist(*attributes)
-      attributes.each do |attr|
-        class_eval <<-EOS
-          def #{attr}=(value)
-            self["#{attr}"] = value
-          end
-
-          def #{attr}
-            self["#{attr}"]
-          end
-        EOS
-      end
+    def expire(seconds)
+      redis.expire(redis_key, seconds)
     end
 
     protected
       def redis; self.class.redis; end
 
+    class << self
+      def redis
+        @@redis ||= Redis.new
+      end
+
+      def redis=(resource)
+        @@redis = resource
+      end
+
+      def find(params)
+        case params
+        when Hash
+          hashes = []
+          params.each_pair do |namespace, key|
+            result = fetch_values( "#{namespace}:#{key}" )
+            unless result.empty?
+              hashes << build(namespace,key,result)
+            end
+          end
+          unless hashes.empty?
+            hashes.size == 1 ? hashes.first : hashes
+          else
+            nil
+          end
+        when String
+          unless self == Redis::NativeHash
+            result = fetch_values( "#{self.new.namespace}:#{params}" )
+          else
+            result = fetch_values(params)
+          end
+          result.empty? ? nil : build(nil,params,result)
+        end
+      end
+
+      def build(namespace, key, values)
+        h = self.new
+        h.namespace = namespace
+        h.key = key
+        h.populate(values)
+        h
+      end
+
+      def fetch_values(key)
+        results = redis.hgetall(key)
+        results.each_pair { |key,value| results[key] = Redis::Marshal.load(value) }
+      end
+
+      def attr_persist(*attributes)
+        attributes.each do |attr|
+          class_eval <<-EOS
+            def #{attr}=(value)
+              self["#{attr}"] = value
+            end
+
+            def #{attr}
+              self["#{attr}"]
+            end
+          EOS
+        end
+      end
+
+    end
   end
 end
 

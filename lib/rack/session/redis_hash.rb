@@ -1,4 +1,9 @@
 module Redis::RedisHashSession
+  def initialize(app, options = {})
+    super
+    @expire_after = options[:expire_after] || 60*60 # 60 minutes, default
+  end
+
   def get_session(env, sid)
     session = Redis::NativeHash.find session_prefix => sid
     unless sid and session
@@ -10,6 +15,7 @@ module Redis::RedisHashSession
   end
 
   def set_session(env, session_id, session, options)
+    @expire_after = options[:expire_after] || @expire_after
     unless session.kind_of?(Redis::NativeHash)
       real_session = Redis::NativeHash.find(session_prefix => session_id) ||
                      Redis::NativeHash.new(session_prefix)
@@ -25,6 +31,7 @@ module Redis::RedisHashSession
       session_id = session.renew_key
     end
     session.save
+    session.expire @expire_after
     return session_id
   end
 
@@ -48,4 +55,3 @@ module Rack
     end
   end
 end
-

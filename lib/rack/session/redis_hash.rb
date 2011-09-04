@@ -1,4 +1,5 @@
 module Redis::RedisHashSession
+
   def initialize(app, options = {})
     super
     @expire_after = options[:expire_after] || 60*60 # 60 minutes, default
@@ -45,6 +46,22 @@ module Redis::RedisHashSession
 
   def session_prefix
     :rack_session
+  end
+end
+
+module Rack
+  module Session
+    module Abstract
+      class ID
+        # overwrite prepare_session behavior to turn off use of SessionHash
+        def prepare_session(env)
+          session_was                  = env[ENV_SESSION_KEY]
+          env[ENV_SESSION_OPTIONS_KEY] = OptionsHash.new(self, env, @default_options)
+          sid, env[ENV_SESSION_KEY]    = load_session(env)
+          env[ENV_SESSION_KEY].merge! session_was if session_was
+        end
+      end
+    end
   end
 end
 

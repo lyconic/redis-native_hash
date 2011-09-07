@@ -1,5 +1,5 @@
 class Redis
-  module KeyHelpers
+  module KeyHelper
 
     def key
       @key ||= generate_key

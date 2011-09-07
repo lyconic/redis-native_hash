@@ -2,7 +2,8 @@ require 'securerandom'
 
 class Redis
   class BigHash
-    include KeyHelpers
+    include ClientHelper
+    include KeyHelper
 
     attr_reader :namespace
 
@@ -87,23 +88,9 @@ class Redis
     end
     alias_method :destroy, :clear
 
-    protected
-
-      def redis
-        self.class.redis
-      end
-
     class << self
       def keys(redis_key)
         redis.hkeys redis_key
-      end
-
-      def redis
-        @@redis ||= NativeHash.redis
-      end
-
-      def redis=(client)
-        @@redis = client
       end
 
       def copy_hash(source_key, dest_key)

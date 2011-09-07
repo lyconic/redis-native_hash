@@ -1,28 +1,11 @@
-require 'redis'
-require 'core_ext/hash' unless defined?(ActiveSupport)
-require 'redis/marshal'
-require 'redis/tracked_hash'
-require 'redis/key_helpers'
-require 'redis/big_hash'
-
-if defined?(Rack::Session)
-  require "rack/session/abstract/id"
-  require 'rack/session/redis_hash'
-end
-
-if defined?(ActionDispatch::Session)
-  require 'action_dispatch/session/redis_hash'
-end
-
-if defined?(ActiveSupport)
-  require "active_support/cache/redis_store"
-end
+require_relative "../redis_hash"
 
 require 'securerandom'
 
 class Redis
   class NativeHash < TrackedHash
-    include KeyHelpers
+    include ClientHelper
+    include KeyHelper
 
     attr_accessor :namespace
 
@@ -76,31 +59,35 @@ class Redis
       @version ||= generate_key
     end
 
-    def save( attempt = 0 )
-      fail "Unable to save Redis::Hash after max attempts." if attempt > 5
-      redis.watch redis_key
-      latest_version = redis.hget(redis_key, "__version")
-      reload! unless ( latest_version.nil? || latest_version == self.version )
-      self.version = nil # generate new version token
-      changed_keys = (self.changed + self.added).uniq
-      changes = []
-      changed_keys.each do |key|
-        changes.push( key, Redis::Marshal.dump(self[key]) )
-      end
-      deleted_keys = self.deleted
-      unless deleted_keys.empty? and changes.empty?
+    def save( max_attempts = 5 )
+      (1..max_attempts).each do |n|
+        redis.watch redis_key
+        latest_version = redis.hget(redis_key, "__version")
+        reload! unless ( latest_version.nil? || latest_version == self.version )
+        self.version = nil # generate new version token
+        changed_keys = (self.changed + self.added).uniq
+        changes = []
+        changed_keys.each do |key|
+          changes.push( key, Redis::Marshal.dump(self[key]) )
+        end
+        deleted_keys = self.deleted
+        if deleted_keys.empty? and changes.empty?
+          redis.unwatch
+          return true
+        end
         success = redis.multi do
           redis.hmset( redis_key, *changes.push("__version", self.version) ) unless changes.empty?
           deleted_keys.each { |key| redis.hdel( redis_key, key) }
         end
         if success
-          untrack!; track! #reset!
-        else
-          save( attempt + 1 )
+          untrack!; track! #reset hash
+          return true
         end
-      else
-        redis.unwatch
       end
+      warn  "Unable to save hash after max attempts (#{max_attempts}). " +
+            "Amazing concurrency event may be underway. " +
+            "Make some popcorn."
+      false
     end
 
     def update(data)
@@ -144,18 +131,7 @@ class Redis
       redis.expire(redis_key, seconds)
     end
 
-    protected
-      def redis; self.class.redis; end
-
     class << self
-      def redis
-        @@redis ||= Redis.new
-      end
-
-      def redis=(resource)
-        @@redis = resource
-      end
-
       def find(params)
         case params
         when Hash

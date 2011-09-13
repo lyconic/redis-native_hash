@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = %q{redis-native_hash}
-  s.version = "0.2.0"
+  s.version = "0.2.1"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Carl Zulauf", "Adam Lassek"]
-  s.date = %q{2011-08-04}
+  s.date = %q{2011-09-07}
   s.description = %q{ruby-hash-to-redis-hash mapping}
   s.email = %q{czulauf@lyconic.com}
   s.extra_rdoc_files = [
@@ -24,6 +24,7 @@ Gem::Specification.new do |s|
     "LICENSE.txt",
     "README.mkd",
     "Rakefile",
+    "TODO.mkd",
     "VERSION",
     "lib/action_dispatch/session/redis_hash.rb",
     "lib/active_support/cache/redis_hash.rb",
@@ -31,10 +32,12 @@ Gem::Specification.new do |s|
     "lib/core_ext/hash.rb",
     "lib/rack/session/redis_hash.rb",
     "lib/redis/big_hash.rb",
-    "lib/redis/key_helpers.rb",
+    "lib/redis/client_helper.rb",
+    "lib/redis/key_helper.rb",
     "lib/redis/marshal.rb",
     "lib/redis/native_hash.rb",
     "lib/redis/tracked_hash.rb",
+    "lib/redis_hash.rb",
     "redis-native_hash.gemspec",
     "spec/redis-hash_spec.rb",
     "spec/redis/big_hash_spec.rb",
@@ -46,11 +49,10 @@ Gem::Specification.new do |s|
   s.homepage = %q{http://github.com/carlzulauf/redis-native_hash}
   s.licenses = ["MIT"]
   s.require_paths = ["lib"]
-  s.rubygems_version = %q{1.3.7}
+  s.rubygems_version = %q{1.6.2}
   s.summary = %q{ruby-hash-to-redis-hash mapping}
 
   if s.respond_to? :specification_version then
-    current_version = Gem::Specification::CURRENT_SPECIFICATION_VERSION
     s.specification_version = 3
 
     if Gem::Version.new(Gem::VERSION) >= Gem::Version.new('1.2.0') then

@@ -37,6 +37,16 @@ class Redis
       retrack!
     end
 
+    def dup
+      dupe = super
+      # duplicate a little deeper
+      # otherwise, object references will make it appear a value hasn't changed when it has
+      self.keys.each do |k|
+        dupe[k] = self[k].dup rescue self[k]
+      end
+      dupe
+    end
+
     def update(other_hash)
       if other_hash.kind_of?(TrackedHash)
         other_original = other_hash.original

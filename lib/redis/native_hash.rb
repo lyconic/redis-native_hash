@@ -84,7 +84,7 @@ class Redis
           return true
         end
       end
-      warn  "Unable to save hash after max attempts (#{max_attempts}). " +
+      raise "Unable to save hash after max attempts (#{max_attempts}). " +
             "Amazing concurrency event may be underway. " +
             "Make some popcorn."
       false

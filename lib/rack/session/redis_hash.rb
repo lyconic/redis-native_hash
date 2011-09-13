@@ -8,7 +8,6 @@ module Redis::RedisHashSession
   def get_session(env, sid)
     session = Redis::NativeHash.find session_prefix => sid
     unless sid and session
-      env['rack.errors'].puts("Session '#{sid.inspect}' not found, initializing...") if $VERBOSE and not sid.nil?
       session = Redis::NativeHash.new session_prefix
       sid = session.key
     end
@@ -57,7 +56,7 @@ module Rack
         def prepare_session(env)
           session_was                  = env[ENV_SESSION_KEY]
           env[ENV_SESSION_OPTIONS_KEY] = OptionsHash.new(self, env, @default_options)
-          sid, env[ENV_SESSION_KEY]    = load_session(env)
+          env[ENV_SESSION_OPTIONS_KEY][:id], env[ENV_SESSION_KEY] = load_session(env)
           env[ENV_SESSION_KEY].merge! session_was if session_was
         end
       end

@@ -149,7 +149,7 @@ class Redis
           end
         when String,Symbol
           unless self == Redis::NativeHash
-            namespace = self.new.namespace
+            namespace = self.new.namespace.to_s
             namespace += ":" if namespace
             result = fetch_values( "#{namespace}#{params}" )
           else

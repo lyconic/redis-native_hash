@@ -2,7 +2,8 @@ require File.expand_path(File.dirname(__FILE__) + '/../spec_helper')
 
 describe Redis::NativeHash do
   before :each do
-    @hash = Redis::NativeHash.new :test, "foo" => "bar"
+    @hash = Redis::NativeHash.new :test
+    @hash.update("foo" => "bar")
     @hash.save
   end
 

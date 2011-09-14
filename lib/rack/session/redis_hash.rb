@@ -6,20 +6,16 @@ module Redis::RedisHashSession
   end
 
   def get_session(env, sid)
-    session = Redis::NativeHash.find session_prefix => sid
-    unless sid and session
-      session = Redis::NativeHash.new session_prefix
-      sid = session.key
-    end
+    session = Redis::LazyHash.new session_prefix => sid
+    sid = session.key
     return [sid, session]
   end
 
   def set_session(env, session_id, session, options)
     @expire_after = options[:expire_after] || @expire_after
-    unless session.kind_of?(Redis::NativeHash)
-      real_session = Redis::NativeHash.find(session_prefix => session_id) ||
-                     Redis::NativeHash.new(session_prefix)
-      real_session.replace(session) if session.kind_of?(Hash)
+    unless session.kind_of?(Redis::LazyHash)
+      real_session = Redis::LazyHash.new(session_prefix)
+      real_session.update(session) if session.kind_of?(Hash)
       real_session.key = session_id unless session_id.nil?
       session = real_session
     end
@@ -36,7 +32,7 @@ module Redis::RedisHashSession
   end
 
   def destroy_session(env, sid, options)
-    session = Redis::NativeHash.find( session_prefix => sid )
+    session = Redis::LazyHash.new( session_prefix => sid )
     unless session.nil?
       options[:renew] ? session.renew_key : session.destroy
       session.key

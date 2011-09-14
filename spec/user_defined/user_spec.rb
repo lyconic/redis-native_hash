@@ -2,7 +2,10 @@ require File.expand_path(File.dirname(__FILE__) + '/../spec_helper')
 
 class User < Redis::NativeHash
   attr_persist :username, :password, :email
-  #attr_index :username
+  def initialize(data = {})
+    super(nil)
+    update(data)
+  end
 end
 
 describe User do
@@ -16,6 +19,7 @@ describe User do
       user = User.find(@user.key)
       user.username.should      == "test"
       user.email.should         == "test@test.com"
+      user.password.should      == nil
       user[:random_key].should  == "random value"
     end
   end

@@ -1,6 +1,7 @@
 module ActiveSupport
   module Cache
     class RedisStore < Store
+      include Redis::ClientHelper
       def initialize(*options)
         options = options.extract_options!
         super(options)
@@ -39,18 +40,6 @@ module ActiveSupport
         def delete_entry(key, options)
           redis.del(key)
         end
-        def redis
-          self.class.redis
-        end
-
-      class << self
-        def redis
-          @@redis ||= Redis::NativeHash.redis
-        end
-        def redis=(client)
-          @@redis = client
-        end
-      end
     end
   end
 end

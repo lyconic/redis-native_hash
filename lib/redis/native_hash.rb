@@ -9,17 +9,16 @@ class Redis
 
     attr_accessor :namespace
 
-    def initialize(*args)
+    def initialize(aargh = nil)
       super(nil)
-      track!
-      if args.first.kind_of?(String) or args.first.kind_of?(Symbol)
-        self.namespace = args.shift
-      else # use class name as default namespace for user defined classes
-        self.namespace = self.class.to_s.downcase \
-            unless self.instance_of?(::Redis::NativeHash)
+      case aargh
+      when String,Symbol
+        self.namespace = aargh
+      when Hash
+        self.namespace = aargh.keys.first
+        self.key       = aargh.values.first
       end
-      data = args.shift
-      update(data) if data.kind_of?(Hash)
+      track!
     end
 
     def []=(key, value)
@@ -107,7 +106,8 @@ class Redis
     end
 
     def reload!
-      self.update( self.class.find( {namespace=>key} ) )
+      hash = self.class.find( namespace ? {namespace => key} : key )
+      self.update( hash ) if hash
     end
     alias_method :reload, :reload!
 
@@ -147,9 +147,11 @@ class Redis
           else
             nil
           end
-        when String
+        when String,Symbol
           unless self == Redis::NativeHash
-            result = fetch_values( "#{self.new.namespace}:#{params}" )
+            namespace = self.new.namespace
+            namespace += ":" if namespace
+            result = fetch_values( "#{namespace}#{params}" )
           else
             result = fetch_values(params)
           end

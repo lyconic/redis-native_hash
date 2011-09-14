@@ -1,9 +1,9 @@
 $LOAD_PATH.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
 $LOAD_PATH.unshift(File.dirname(__FILE__))
 require 'rspec'
-require 'redis/native_hash'
+require 'redis_hash'
 
-Redis::NativeHash.redis = Redis.new rescue Redis.new(:path => "/tmp/redis.sock")
+Redis::Client.default = Redis.new rescue Redis.new(:path => "/tmp/redis.sock")
 
 # Requires supporting files with custom matchers and macros, etc,
 # in ./support/ and its subdirectories.

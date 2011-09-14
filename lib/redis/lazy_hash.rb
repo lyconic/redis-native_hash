@@ -24,6 +24,11 @@ class Redis
       @hash.key
     end
 
+    def key?(key)
+      lazy_load!
+      @hash.key?(key)
+    end
+
     def namespace
       @hash.namespace
     end
@@ -43,6 +48,11 @@ class Redis
 
     def destroy
       @hash.destroy
+    end
+
+    def clear
+      lazy_load!
+      @hash.clear
     end
 
     def reload
@@ -80,8 +90,7 @@ class Redis
     end
 
     def to_hash
-      lazy_load!
-      @hash
+      self
     end
 
     private

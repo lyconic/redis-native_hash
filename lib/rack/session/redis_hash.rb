@@ -15,7 +15,7 @@ module Redis::RedisHashSession
     @expire_after = options[:expire_after] || @expire_after
     unless session.kind_of?(Redis::LazyHash)
       real_session = Redis::LazyHash.new(session_prefix)
-      real_session.replace(session) if session.kind_of?(Hash)
+      real_session.update(session) if session.kind_of?(Hash)
       real_session.key = session_id unless session_id.nil?
       session = real_session
     end

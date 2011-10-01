@@ -6,6 +6,7 @@ require 'redis/client_helper'
 require 'redis/key_helper'
 require 'redis/big_hash'
 require 'redis/native_hash'
+require 'redis/lazy_hash'
 
 if defined?(Rack::Session)
   require "rack/session/abstract/id"

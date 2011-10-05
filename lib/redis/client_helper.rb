@@ -22,10 +22,13 @@ class Redis
     end
     module ClassMethods
       def redis
-        @@redis ||= ::Redis::Client.default
+        unless self.class_variable_defined?(:'@@redis')
+          self.class_variable_set(:'@@redis', ::Redis::Client.default)
+        end
+        self.class_variable_get(:'@@redis')
       end
       def redis=(connection)
-        @@redis = connection
+        self.class_variable_set(:'@@redis', connection)
       end
     end
   end

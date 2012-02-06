@@ -1,77 +1,26 @@
+require 'forwardable'
+
 class Redis
   class LazyHash
+    extend Forwardable
+    def_delegators :@hash, :key, :namespace, :namespace=, :destroy,
+                           :reload, :reload!, :expire
+
     def initialize(args = nil)
       @hash = NativeHash.new(args)
       @loaded = false
     end
 
-    def [](key)
-      lazy_load!
-      @hash[key]
-    end
-
-    def []=(key, value)
-      lazy_load!
-      @hash[key] = value
-    end
-
-    def delete(key)
-      lazy_load!
-      @hash.delete(key)
-    end
-
-    def key
-      @hash.key
-    end
-
-    def key?(key)
-      lazy_load!
-      @hash.key?(key)
-    end
-
-    def namespace
-      @hash.namespace
-    end
-
-    def namespace=(newspace)
-      @hash.namespace = newspace
-    end
-
-    def update(data)
-      lazy_load!
-      @hash.update(data)
-    end
-
-    def save
-      @hash.save if loaded?
-    end
-
-    def destroy
-      @hash.destroy
-    end
-
-    def clear
-      lazy_load!
-      @hash.clear
-    end
-
-    def reload
-      @hash.reload!
-    end
-    alias_method :reload!, :reload
-
-    def renew_key(new_key = nil)
-      lazy_load!
-      @hash.renew_key(new_key)
-    end
-    alias_method :key=, :renew_key
-
-    def expire(expiration)
-      @hash.expire(expiration)
-    end
-
-    def loaded?
-      @loaded
+    def method_missing(meth, *args, &block)
+      if @hash.respond_to?(meth)
+        self.class.send(:define_method, meth) do |*args, &block|
+          lazy_load!
+          @hash.send(meth, *args, &block)
+        end
+        send(meth, *args, &block)
+      else
+        super
+      end
     end
 
     def inspect
@@ -79,14 +28,12 @@ class Redis
       @hash.inspect
     end
 
-    def size
-      lazy_load!
-      @hash.size
+    def save
+      @hash.save if loaded?
     end
 
-    def replace(other_hash)
-      lazy_load!
-      @hash.replace(other_hash)
+    def loaded?
+      @loaded
     end
 
     def to_hash

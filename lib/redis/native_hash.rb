@@ -150,7 +150,7 @@ class Redis
         when String,Symbol
           unless self == Redis::NativeHash
             namespace = self.new.namespace.to_s
-            namespace = "#{namespace}:" if namespace
+            namespace = "#{namespace}:" unless namespace.empty?
             result = fetch_values( "#{namespace}#{params}" )
           else
             result = fetch_values(params)

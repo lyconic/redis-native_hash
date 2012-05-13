@@ -1,8 +1,146 @@
-= redis-native_hash
+# redis-native_hash
 
-Description goes here.
+Tools to help expose Redis' powerful Hash type through a familiar Ruby `Hash` interface.
+`NativeHash` provides a general solution for exposing reasonably sized Redis hashes as
+Ruby hashes, including sane and transparent transactions, nested hash support, and automatic
+serialization of complex data types. `BigHash` is provided to
+efficiently handle big or even enormous Redis hashes. `LazyHash` is a convenient proxy
+for `NativeHash` useful when you aren't sure the hash will be read (useful for sessions).
 
-== Contributing to redis-native_hash
+Also included is Rack middleware to store sessions in Redis hashes, and a two Rails caching
+solution, one using Redis hashes and the other using Redis strings.
+
+## Example usage for `NativeHash`
+
+```ruby
+require "redis_hash"
+
+# Create a Ruby hash backed by Redis
+hash = Redis::NatveHash.new  # => {}
+hash[:foo] = :bar
+hash.key                     # => "20120512181125.368617.04d2abae82db62ece82b3805b654082b"
+hash.save                    # => true
+
+# Retrieve an existing hash from Redis
+existing = Redis::NativeHash.find(hash.key) # => {"foo" => :bar}
+
+# Symbols and strings can be used interchangeably, sort of like HashWithIndifferentAccess
+existing[:foo]    # => :bar
+existing["foo"]   # => :bar
+
+# Convert existing hash to Redis backed hash
+hash = {yin: "yang"}
+redis_hash = Redis::NativeHash.new.update(hash)
+
+# Create a hash with a custom key
+hash.key = :custom_key
+hash.key  # => :custom_key
+
+# Use namespaces
+hash = Redis::NativeHash.new(:custom_namespace)
+hash.namespace  # => :custom_namespace
+hash.key        # => "20120512212206.376929.5194d9ea37e2d1b6c773b860cce58c7d"
+hash.redis_key  # => "custom_namespace:20120512212206.376929.5194d9ea37e2d1b6c773b860cce58c7d"
+
+# Initialize with custom namespace and key
+hash = Redis::NativeHash.new(custom_namespace: "my_hash_key")
+hash[:test] = "value"
+hash.namespace  # => :custom_namespace
+hash.key        # => "my_hash_key"
+hash.redis_key  # => "custom_namespace:my_hash_key"
+hash.save       # => true
+
+# Retrieve existing hash using namespace and key
+existing = Redis::NativeHash.find(custom_namespace: "my_hash_key")  # => {"test" => "value"}
+```
+
+## Example usage for `BigHash`
+
+```ruby
+# Initializing a BigHash
+big = Redis::BigHash.new  # => #<Redis::BigHash:0x007fcdfc8890d8 @key=nil, @namespace=nil>
+big = Redis::BigHash.new("custom_key")
+big = Redis::BigHash.new("custom_key", "app_namespace")
+
+# No #save method as writes take place immediately
+big = Redis::BigHash("my_key")
+big.[:test] = "right now"
+redis.hget("my_key", "test")  # => "right_now"
+```
+
+## Usage for `LazyHash`
+
+A simple lazy-loading proxy object that should behave identically to NativeHash. 
+Check `hash.loaded?` if you need to know whether the underlying hash has been read.
+
+## Using as a Rails session store
+
+Change your `config/initializers/session_store.rb` to look something like this:
+```ruby
+require "redis_hash"
+MyAppName::Application.config.session_store :redis_hash
+```
+
+## Using Redis string-based caching implementation
+
+Only the string based implementation is able to properly handle automatic expiration, so it is preferred.
+
+Add the following line to the appropriate environment config in `config/environments/`
+
+```ruby
+config.cache_store = :redis_store
+```
+
+To set a cache expiration, use a line like this:
+
+```ruby
+config.cache_store = [:redis_store, :expires_in => 24.hours]
+```
+
+## Client helpers
+
+This gem adds a useful `Redis::ClientHelper` module to simplify both connection sharing and using multiple connections.
+Using `Redis::Client.default=` you can set the connection all future instances of `NativeHash`/`BigHash`/`LazyHash`
+will use.
+
+```ruby
+# Changes to the default cascade down, unless class-level defaults have already been set
+Redis::Client.default     # => #<Redis client v2.2.2 connected to redis://127.0.0.1:6379/0 (Redis v2.4.6)>
+redis = Redis.new(db: 8)  # => #<Redis client v2.2.2 connected to redis://127.0.0.1:6379/8 (Redis v2.4.6)>
+Redis::Client.default = redis
+Redis::Client.default     # => #<Redis client v2.2.2 connected to redis://127.0.0.1:6379/8 (Redis v2.4.6)>
+Redis::BigHash.redis      # => #<Redis client v2.2.2 connected to redis://127.0.0.1:6379/8 (Redis v2.4.6)>
+Redis::BigHash.new.redis  # => #<Redis client v2.2.2 connected to redis://127.0.0.1:6379/8 (Redis v2.4.6)>
+```
+
+The client helper also lets you set the redis connection to use for an entire class, or a single instance.
+
+```ruby
+Redis::BigHash.redis = Redis.new(db: 4)
+Redis::BigHash.redis      # => #<Redis client v2.2.2 connected to redis://127.0.0.1:6379/4 (Redis v2.4.6)>
+Redis::Client.default     # => #<Redis client v2.2.2 connected to redis://127.0.0.1:6379/0 (Redis v2.4.6)>
+hash = Redis::BigHash.new
+hash.redis = Redis.new(db: 5)
+hash.redis                # => #<Redis client v2.2.2 connected to redis://127.0.0.1:6379/5 (Redis v2.4.6)>
+Redis::BigHash.redis      # => #<Redis client v2.2.2 connected to redis://127.0.0.1:6379/4 (Redis v2.4.6)>
+```
+
+You can include the client helper into your own classes to give your own classes similar behavior.
+```ruby
+class CustomClass
+  include Redis::ClientHelper
+end
+CustomClass.redis         # => #<Redis client v2.2.2 connected to redis://127.0.0.1:6379/0 (Redis v2.4.6)>
+x = CustomClass.new
+x.redis = Redis.new(db: 3)
+x.redis                   # => #<Redis client v2.2.2 connected to redis://127.0.0.1:6379/3 (Redis v2.4.6)>
+```
+
+**Note:** Your own classes will use `Redis::Client.default` unless a class-level or instance-level connection is set.
+
+**See tests for more examples.**
+
+## Contributing to redis-native_hash
 
 * Check out the latest master to make sure the feature hasn't been implemented or the bug hasn't been fixed yet
 * Check out the issue tracker to make sure someone already hasn't requested it and/or contributed it
@@ -10,10 +148,7 @@ Description goes here.
 * Start a feature/bugfix branch
 * Commit and push until you are happy with your contribution
 * Make sure to add tests for it. This is important so I don't break it in a future version unintentionally.
-* Please try not to mess with the Rakefile, version, or history. If you want to have your own version, or is otherwise necessary, that is fine, but please isolate to its own commit so I can cherry-pick around it.
 
-== Copyright
+### Copyright
 
-Copyright (c) 2011 Lyconic. See LICENSE.txt for
-further details.
-
+Copyright (c) 2011 Lyconic. See LICENSE.txt for further details.

@@ -18,7 +18,7 @@ Jeweler::Tasks.new do |gem|
   gem.homepage = "http://github.com/carlzulauf/redis-native_hash"
   gem.license = "MIT"
   gem.summary = %Q{ruby-hash-to-redis-hash mapping}
-  gem.description = %Q{ruby-hash-to-redis-hash mapping}
+  gem.description = %Q{Provides interfaces to Redis hashes that act like Ruby hashes. Rack/Rails caching and sessions too!}
   gem.email = "czulauf@lyconic.com"
   gem.authors = ["Carl Zulauf", "Adam Lassek"]
   # dependencies defined in Gemfile
@@ -38,7 +38,7 @@ end
 
 task :default => :spec
 
-require 'rake/rdoctask'
+require 'rdoc/task'
 Rake::RDocTask.new do |rdoc|
   version = File.exist?('VERSION') ? File.read('VERSION') : ""
 

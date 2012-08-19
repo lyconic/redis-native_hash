@@ -9,7 +9,7 @@ Gem::Specification.new do |s|
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Carl Zulauf", "Adam Lassek"]
-  s.date = "2012-08-06"
+  s.date = "2012-08-19"
   s.description = "Provides interfaces to Redis hashes that act like Ruby hashes. Rack/Rails caching and sessions too!"
   s.email = "czulauf@lyconic.com"
   s.extra_rdoc_files = [

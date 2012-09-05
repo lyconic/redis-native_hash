@@ -10,7 +10,6 @@ class Redis
     def initialize( key = nil, namespace = nil )
       @key       = key
       @namespace = namespace
-      super()
     end
 
     def [](*hash_keys)

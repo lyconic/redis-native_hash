@@ -12,7 +12,7 @@ module ActiveSupport
       # servers for all keys.
       def read_multi(*names)
         values = redis.mget *names
-        values.map{ |v| Redis::Marshal.load(v) }
+        values.map{ |v| Redis::Marshaller.load(v) }
       end
 
       # Clear the entire cache on server. This method should
@@ -25,14 +25,14 @@ module ActiveSupport
 
         # Read an entry from the cache.
         def read_entry(key, options)
-          Redis::Marshal.load(redis.get(key))
+          Redis::Marshaller.load(redis.get(key))
         end
 
         # Write an entry to the cache.
         def write_entry(key, entry, options)
           method = options && options[:unless_exist] ? :setnx : :set
           expires_in = options[:expires_in].to_i
-          redis.send(method, key, Redis::Marshal.dump(entry))
+          redis.send(method, key, Redis::Marshaller.dump(entry))
           redis.expire(key, expires_in) if expires_in > 0
         end
 

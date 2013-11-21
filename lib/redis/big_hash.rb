@@ -14,21 +14,21 @@ class Redis
 
     def [](*hash_keys)
       if hash_keys.one?
-        Redis::Marshal.load( redis.hget(redis_key, convert_key(hash_keys.first)) )
+        Redis::Marshaller.load( redis.hget(redis_key, convert_key(hash_keys.first)) )
       elsif hash_keys.any?
         values = redis.hmget( redis_key, *hash_keys.map{ |k| convert_key(k) } )
-        values.map{ |v| Redis::Marshal.load(v) }
+        values.map{ |v| Redis::Marshaller.load(v) }
       end
     end
 
     def []=(hash_key, value)
-      redis.hset( redis_key, convert_key(hash_key), Redis::Marshal.dump(value) )
+      redis.hset( redis_key, convert_key(hash_key), Redis::Marshaller.dump(value) )
     end
 
     # set only if key doesn't already exist
     # equivilent to doing `hash[:key] ||= value`, but more efficient
     def add(hash_key, value)
-      redis.hsetnx( redis_key, convert_key(hash_key), Redis::Marshal.dump(value) )
+      redis.hsetnx( redis_key, convert_key(hash_key), Redis::Marshaller.dump(value) )
     end
 
     def key=(new_key)
@@ -69,7 +69,7 @@ class Redis
       writes = []
       other_hash.each_pair do |hash_key, value|
         writes << hash_key.to_s
-        writes << Redis::Marshal.dump( value )
+        writes << Redis::Marshaller.dump( value )
       end
       redis.hmset(redis_key, *writes)
     end

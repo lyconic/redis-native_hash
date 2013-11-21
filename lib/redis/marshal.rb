@@ -1,5 +1,5 @@
 class Redis
-  class Marshal
+  class Marshaller
     def self.dump(value)
       case value
       when String

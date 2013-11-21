@@ -67,7 +67,7 @@ class Redis
         changed_keys = (self.changed + self.added).uniq
         changes = []
         changed_keys.each do |key|
-          changes.push( key, Redis::Marshal.dump(self[key]) )
+          changes.push( key, Redis::Marshaller.dump(self[key]) )
         end
         deleted_keys = self.deleted
         if deleted_keys.empty? and changes.empty?
@@ -169,7 +169,7 @@ class Redis
 
       def fetch_values(key)
         results = redis.hgetall(key)
-        results.each_pair { |key,value| results[key] = Redis::Marshal.load(value) }
+        results.each_pair { |key,value| results[key] = Redis::Marshaller.load(value) }
       end
 
       def attr_persist(*attributes)

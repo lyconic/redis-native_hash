@@ -19,7 +19,7 @@ Jeweler::Tasks.new do |gem|
   gem.license = "MIT"
   gem.summary = %Q{ruby-hash-to-redis-hash mapping}
   gem.description = %Q{Provides interfaces to Redis hashes that act like Ruby hashes. Rack/Rails caching and sessions too!}
-  gem.email = "czulauf@lyconic.com"
+  gem.email = ["czulauf@lyconic.com", "alassek@lyconic.com"]
   gem.authors = ["Carl Zulauf", "Adam Lassek"]
   # dependencies defined in Gemfile
 end

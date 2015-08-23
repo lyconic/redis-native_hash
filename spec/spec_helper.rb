@@ -10,6 +10,6 @@ Redis::Client.default = Redis.new rescue Redis.new(:path => "/tmp/redis.sock")
 Dir["#{File.dirname(__FILE__)}/support/**/*.rb"].each {|f| require f}
 
 RSpec.configure do |config|
-
+  config.expect_with(:rspec) { |c| c.syntax = :should }
 end
 

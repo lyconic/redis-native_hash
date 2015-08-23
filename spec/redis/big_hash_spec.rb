@@ -69,10 +69,10 @@ describe Redis::BigHash do
 
   describe "#key?" do
     it "should return true when a key is present" do
-      @hash.key?(:foo).should be_true
+      @hash.key?(:foo).should be(true)
     end
     it "should return false when a key is not present" do
-      @hash.key?(:fubar).should be_false
+      @hash.key?(:fubar).should be(false)
     end
   end
 

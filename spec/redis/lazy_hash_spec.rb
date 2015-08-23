@@ -14,11 +14,11 @@ describe Redis::LazyHash do
 
   describe "#loaded?" do
     it "should not be loaded when no read/write has occurred" do
-      @hash.loaded?.should be_false
+      @hash.loaded?.should be(false)
     end
     it "should be loaded after a read occurs" do
       @hash[:foo]
-      @hash.loaded?.should be_true
+      @hash.loaded?.should be(true)
     end
   end
 
